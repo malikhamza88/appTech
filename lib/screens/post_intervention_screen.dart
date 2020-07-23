@@ -126,9 +126,9 @@ class _InterventionScreenPageState extends State<InterventionScreenPage> {
                         title: Text("Telephone"),
                         subtitle: Text('${fetchedData.telClient}'),
                         onTap: () async {
-                          if (fetchedData.telClient != null) {
-                            if (await canLaunch(fetchedData.telClient))
-                              await launch("tel://${fetchedData.telClient}");
+                          String number = fetchedData.telClient;
+                          if (number.isNotEmpty) {
+                            await launch("tel://$number");
                           }
                         },
                       ),
