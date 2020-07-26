@@ -4,25 +4,25 @@ import 'package:login_example/models/interventionPlanning.dart';
 import 'package:login_example/providers/auth_provider.dart';
 import 'package:login_example/screens/interventions_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'utils/transition_route_observer.dart';
 import 'package:login_example/screens/post_intervention_screen.dart';
 
-void main() {
-  SystemChrome.setSystemUIOverlayStyle(
-    SystemUiOverlayStyle(
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       systemNavigationBarColor:
-          SystemUiOverlayStyle.dark.systemNavigationBarColor,
-    ),
-  );
-  runApp(MyApp());
-}
+          SystemUiOverlayStyle.dark.systemNavigationBarColor));
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  var email = prefs.getString('email');
+  var password = prefs.getString('password');
+  print(email);
+
+  runApp(
+    ChangeNotifierProvider(
       create: (BuildContext context) => AuthProvider(),
       child: MaterialApp(
         title: 'Login Demo',
@@ -62,16 +62,22 @@ class MyApp extends StatelessWidget {
             overline: TextStyle(fontFamily: 'NotoSans'),
           ),
         ),
-        home: LoginScreen(),
+        home: email == null
+            ? LoginScreen()
+            : DashboardScreen(
+                email: email,
+                password: password,
+              ),
         navigatorObservers: [TransitionRouteObserver()],
         routes: {
           LoginScreen.routeName: (context) => LoginScreen(),
           DashboardScreen.routeName: (context) => DashboardScreen(),
           TaskPage.routeName: (context) => TaskPage(),
-          InterventionScreenPage.routeName: (context) => InterventionScreenPage(),
+          InterventionScreenPage.routeName: (context) =>
+              InterventionScreenPage(),
           PlanningPage.routeName: (context) => PlanningPage(),
         },
       ),
-    );
-  }
+    ),
+  );
 }

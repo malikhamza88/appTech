@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_login/flutter_login.dart';
 import 'package:login_example/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 import '../utils/custom_route.dart';
 import 'dashboard_screen.dart';
@@ -72,6 +73,11 @@ class _LoginScreenState extends State<LoginScreen> {
         if (loginData.password.isEmpty) {
           return "mot de passe vide !!";
         }
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setString('email', loginData.name);
+        prefs.setString('password', loginData.password);
+
         String token =
             await provider.loginUser(loginData.name, loginData.password);
         return token;

@@ -6,8 +6,10 @@ import 'package:flutter_login/widgets.dart';
 import 'package:login_example/models/interventionPlanning.dart';
 import 'package:login_example/providers/auth_provider.dart';
 import 'package:login_example/screens/interventions_screen.dart';
+import 'package:login_example/screens/login_screen.dart';
 import 'package:login_example/screens/post_intervention_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/transition_route_observer.dart';
 import '../widgets/fade_in.dart';
 import '../utils/constants.dart';
@@ -17,17 +19,22 @@ import '../widgets/round_button.dart';
 class DashboardScreen extends StatefulWidget {
   static const routeName = '/dashboard';
 
+  final String email;
+  final String password;
+
+  DashboardScreen({Key key, this.email, this.password}) : super(key: key);
+
   @override
   _DashboardScreenState createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin, TransitionRouteAware {
-  Future<bool> _goToLogin(BuildContext context) {
-    return Navigator.of(context)
-        .pushReplacementNamed('/')
-        // we dont want to pop the screen, just replace it completely
-        .then((_) => false);
+  void _goToLogin(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('email');
+    prefs.remove('password');
+    Navigator.of(context).pushReplacementNamed(LoginScreen.routeName);
   }
 
   final routeObserver = TransitionRouteObserver<PageRoute>();
@@ -40,6 +47,15 @@ class _DashboardScreenState extends State<DashboardScreen>
   void initState() {
     super.initState();
 
+    if (widget.email != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+//          _isLoading = true;
+        });
+        getToken();
+      });
+    }
+
     _loadingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1250),
@@ -50,6 +66,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       parent: _loadingController,
       curve: headerAniInterval,
     ));
+  }
+
+  void getToken() async {
+    await Provider.of<AuthProvider>(context, listen: false)
+        .getToken(widget.email, widget.password);
   }
 
   @override
@@ -85,21 +106,26 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Hero(
-              tag: Constants.logoTag,
-              child: Image.asset(
-                'assets/images/ecorp.png',
-                filterQuality: FilterQuality.high,
-                height: 30,
-              ),
+            child: Image.asset(
+              'assets/images/ecorp.png',
+              filterQuality: FilterQuality.high,
+              height: 30,
             ),
           ),
-          HeroText(
+          SizedBox(
+            width: 2,
+          ),
+          Text(
             Constants.appName,
-            tag: Constants.titleTag,
-            viewState: ViewState.shrunk,
             style: LoginThemeHelper.loginTextStyle,
           ),
+
+//          HeroText(
+//            Constants.appName,
+//            tag: Constants.titleTag,
+//            viewState: ViewState.shrunk,
+//            style: LoginThemeHelper.loginTextStyle,
+//          ),
           SizedBox(width: 20),
         ],
       ),
@@ -223,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: Icon(
                 FontAwesomeIcons.calendar,
                 //size: 20,
-              ),//
+              ), //
             ),
             label: 'Planning',
             interval: Interval(step, aniInterval + step),
@@ -302,7 +328,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final dataProvider = Provider.of<AuthProvider>(context);
 
     return WillPopScope(
-      onWillPop: () => _goToLogin(context),
+      onWillPop: () {},
       child: SafeArea(
         child: Scaffold(
           appBar: _buildAppBar(theme),

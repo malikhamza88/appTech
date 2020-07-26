@@ -1,6 +1,3 @@
-import 'dart:collection';
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +14,22 @@ class AuthProvider extends ChangeNotifier {
 
   List<InterData> _interventions = [];
   List<InterData> get interventions => _interventions;
+
+  Future<void> getToken(String username, String password) async {
+    final String url = "http://demo-apptech.com/Apis/Login/";
+    var map = new Map<String, dynamic>();
+    map['user_name'] = username;
+    map['password'] = password;
+    var response = await http.post(url, body: map);
+    if (response.statusCode != 200) {
+      print("User not exists");
+    } else {
+      var userData = UserData.fromJson(json.decode(response.body));
+      _token = userData.data.token;
+      notifyListeners();
+      print("Token:$_token");
+    }
+  }
 
   Future<String> loginUser(String username, String password) async {
     final String url = "http://demo-apptech.com/Apis/Login/";
