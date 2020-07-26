@@ -1,10 +1,15 @@
+import 'dart:io';
+
+import 'package:connectivity/connectivity.dart';
 import 'package:dio/dio.dart';
+import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:login_example/models/interventions_model.dart';
 import 'dart:convert';
 
 import 'package:login_example/models/users.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AuthProvider extends ChangeNotifier {
   String _token = '';
@@ -50,13 +55,26 @@ class AuthProvider extends ChangeNotifier {
   Future<List<InterData>> fetchAllInterventions() async {
     final String url =
         "http://demo-apptech.com/Apis/Interventions/?token=$_token";
-    var response = await http.get(url);
-    var interData = Interventions.fromJson(json.decode(response.body));
-    _interventions = interData.data;
-    _isLoading = false;
-    notifyListeners();
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    String fileName = "userdata.json";
+    var dir = await getTemporaryDirectory();
+    File file = new File(dir.path + "/" + fileName);
 
-    return interData.data;
+    if (connectivityResult == ConnectivityResult.none) {
+      var jsonData = file.readAsStringSync();
+      var response = Interventions.fromJson(json.decode(jsonData));
+      _interventions = response.data;
+      return response.data;
+    } else {
+      var response = await http.get(url);
+      var interData = Interventions.fromJson(json.decode(response.body));
+      _interventions = interData.data;
+      file.writeAsStringSync(response.body, flush: true, mode: FileMode.write);
+      _isLoading = false;
+      notifyListeners();
+
+      return interData.data;
+    }
   }
 
   Future<String> UploadFile(Map<String, dynamic> data) async {
